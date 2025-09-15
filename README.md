@@ -1,4 +1,4 @@
-## [**Group Expectation Policy Optimization for Heterogeneous Reinforcement Learning**](https://arxiv.org/abs/2508.17850) 
+## [**GEPO: Group Expectation Policy Optimization for Heterogeneous Reinforcement Learning**](https://arxiv.org/abs/2508.17850) 
 
 
 The code is built on [trl](https://github.com/huggingface/trl)/[openR1](https://github.com/huggingface/open-r1).
