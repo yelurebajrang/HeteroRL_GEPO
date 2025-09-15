@@ -2,6 +2,8 @@
 
 ![GEPO](./MainFig.png)
 
+GEPO improves upon GRPO and GSPO by employing group-level importance weights to enhance training stability. In both zero-delay (online) and high-delay (up to 1800 seconds) heterogeneous reinforcement learning scenarios, GEPO demonstrates superior stability and better evaluation performance.
+
 The code is built on [trl](https://github.com/huggingface/trl)/[openR1](https://github.com/huggingface/open-r1).
 
 ### Heterogeneous Reinforcement Learning
