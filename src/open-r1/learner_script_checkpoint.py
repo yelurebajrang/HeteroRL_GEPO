@@ -66,7 +66,7 @@ from datasets import load_dataset
 from transformers import set_seed
 from transformers.trainer_utils import get_last_checkpoint, speed_metrics
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from open_r1.configs import GRPOConfig, GRPOScriptArguments, HeteroRLConfig
+from open_r1.configs import GRPOConfig, GRPOScriptArguments, GPGConfig
 from open_r1.rewards import get_reward_funcs
 from open_r1.utils import get_tokenizer
 from open_r1.utils.callbacks import get_callbacks
@@ -337,6 +337,9 @@ def shuffle_tensor_dict(tensor_dict: dict[str, Optional[torch.Tensor]]) -> dict[
     permutation = torch.randperm(batch_size)
     return {key: tensor[permutation] if isinstance(tensor, torch.Tensor) else tensor for key, tensor in tensor_dict.items()}
 
+# =================================================================================
+# 定义一个修改版的 GPGTrainer，用于学习器
+# =================================================================================
 
 # What we call a reward function is a callable that takes a list of prompts and completions and returns a list of
 # rewards. When it's a string, it's a model ID, so it's loaded as a pretrained model.
@@ -694,10 +697,10 @@ class Learner_MoISTrainer(Trainer):
                         reward_func, evaluation_mode=True, device_placement=True
                     )
         # 从环境变量获取共享目录路径
-        fs_queue_path = os.getenv("FS_QUEUE_PATH",  "./")
+        fs_queue_path = os.getenv("FS_QUEUE_PATH",  "/Async/Qwen3-0.6B")
 
         self.sync_weights_path = Path(
-            os.getenv("SYNC_WEIGHTS_PATH", "./"))
+            os.getenv("SYNC_WEIGHTS_PATH", "/tmp/Qwen3-0.6B/gpg_async_weights.pt"))
 
         # 设置文件队列目录
         self.queue_dir, self.processing_dir = setup_fs_queue(fs_queue_path)
@@ -745,6 +748,11 @@ class Learner_MoISTrainer(Trainer):
         ################## 样本-level 的P和Q ##################
         sampler_seq_lopp =  (old_per_token_logps * completion_mask).sum(dim=1) / completion_mask.sum(dim=1).clamp(min=1.0)
         learner_seq_lopp = (per_token_logps * completion_mask).sum(dim=1) / completion_mask.sum(dim=1).clamp(min=1.0)
+
+        ## policy entropy https://arxiv.org/pdf/2505.22617
+        sampler_entropy = -sampler_seq_lopp.detach().mean()
+        learner_entropy = -learner_seq_lopp.detach().mean()
+
         avg_sampler_seq_p = sampler_seq_lopp.exp().mean().detach()
         std_sampler_seq_p = sampler_seq_lopp.exp().std().detach()
         adv_std = advantages.std()
@@ -755,7 +763,7 @@ class Learner_MoISTrainer(Trainer):
         E_qQ =  (normlized_q * sampler_seq_p).sum()
 
         # Compute the loss
-        if self.loss_type in ["grpo", "bnpo", "dr_grpo"]:
+        if self.loss_type in ["grpo", "bnpo", "dr_grpo", "delta_ln"]:
             coef_1 = torch.exp(per_token_logps - old_per_token_logps)
             coef_2 = torch.clamp(coef_1, 1 - self.epsilon_low, 1 + self.epsilon_high)
             # Two-sided clipping
@@ -774,7 +782,16 @@ class Learner_MoISTrainer(Trainer):
             elif self.loss_type == "bnpo":
                 loss = (per_token_loss * completion_mask).sum() / completion_mask.sum().clamp(min=1.0)
             elif self.loss_type == "dr_grpo":
-                loss = (per_token_loss * completion_mask).sum() / (per_token_loss.size(0) * self.max_completion_length)         
+                loss = (per_token_loss * completion_mask).sum() / (per_token_loss.size(0) * self.max_completion_length)
+            elif self.loss_type == "delta_ln": #∆L Normalization https://arxiv.org/pdf/2509.07558
+                alpha = 0.75  # hyper-params (In paper: α = 0.75 for Math, α = 1 for CountDown)
+                ## $L_i^{-\alpha}$
+                L_alpha  = completion_mask.sum(-1).clamp(min=1)**(-alpha)
+                ## $\Sigma_{i=1}^{i=Batch-size}$ $L_i^{-\alpha}$ * M
+                LM = L_alpha.sum() *  self.max_completion_length
+                coef_deltaL = (L_alpha/LM).unsqueeze(1) # [bs, sql]
+                loss = (coef_deltaL * per_token_loss * completion_mask).sum()
+
         elif self.loss_type in ["EqP", "gepo", "gspo"]:
             if self.loss_type == "EqP":
                 coef_1 = learner_seq_p / E_qP
@@ -832,9 +849,14 @@ class Learner_MoISTrainer(Trainer):
         self._metrics[mode]["adv_std"].append(adv_std.item())
         self._metrics[mode]["avg_sampler_seq_p"].append(avg_sampler_seq_p.item())
         self._metrics[mode]["std_sampler_seq_p"].append(std_sampler_seq_p.item())
+
+        ## policy entropy https://arxiv.org/pdf/2505.22617
+        self._metrics[mode]["sampler_entropy"].append(sampler_entropy.item())
+        self._metrics[mode]["learner_entropy"].append(learner_entropy.item())
+
         self._metrics[mode]["cppo_kl"].append(loss_cppo_kl.item())
 
-        if self.loss_type in ["grpo", "bnpo", "dr_grpo"]:
+        if self.loss_type in ["grpo", "bnpo", "dr_grpo","delta_ln"]:
             is_low_clipped = (coef_1 < 1 - self.epsilon_low) & (advantages.unsqueeze(1) < 0)
             is_high_clipped = (coef_1 > 1 + self.epsilon_high) & (advantages.unsqueeze(1) > 0)
             is_region_clipped = is_low_clipped | is_high_clipped
@@ -1191,9 +1213,28 @@ class Learner_MoISTrainer(Trainer):
             loss = loss.mean().detach()
         return loss, None, None
 
+    # ### gpg log func ###
+    # def log(self, logs: dict[str, float], start_time: Optional[float] = None) -> None:
+    #     mode = "train" if self.model.training else "eval"
+    #     metrics = {key: sum(val) / len(val) for key, val in self._metrics[mode].items()}  # average the metrics
+    #     # if self._metrics[mode].get('num_identical_reward_groups') is not None:
+    #     #     metrics['num_same_reward_groups'] = self._metrics[mode]['num_identical_reward_groups']
 
+    #     # This method can be called both in training and evaluation. When called in evaluation, the keys in `logs`
+    #     # start with "eval_". We need to add the prefix "eval_" to the keys in `metrics` to match the format.
+    #     if mode == "eval":
+    #         metrics = {f"eval_{key}": val for key, val in metrics.items()}
 
+    #     logs = {**logs, **metrics}
+    #     if version.parse(transformers.__version__) >= version.parse("4.47.0.dev0"):
+    #         Trainer.log(self, logs, start_time)
+    #         # super().log(logs, start_time)
+    #     else:  # transformers<=4.46
+    #         Trainer.log(self, logs)
+    #         # super().log(logs)
+    #     self._metrics[mode].clear()
 
+    # 使用GPG的 log函数
     def log(self, logs: dict[str, float], start_time: Optional[float] = None) -> None:
         mode = "train" if self.model.training else "eval"
         metrics = {key: sum(val) / len(val) for key, val in self._metrics[mode].items()}  # average the metrics
@@ -1214,6 +1255,44 @@ class Learner_MoISTrainer(Trainer):
             # super().log(logs)
         self._metrics[mode].clear()
     #
+    # def log(self, logs: dict[str, float], start_time: Optional[float] = None) -> None:
+    #     mode = "train" if self.model.training else "eval"
+    #     metrics = {key: sum(val) / len(val) for key, val in self._metrics[mode].items()}  # average the metrics
+    #
+    #     # This method can be called both in training and evaluation. When called in evaluation, the keys in `logs`
+    #     # start with "eval_". We need to add the prefix "eval_" to the keys in `metrics` to match the format.
+    #     if mode == "eval":
+    #         metrics = {f"eval_{key}": val for key, val in metrics.items()}
+    #
+    #     logs = {**logs, **metrics}
+    #     super().log(logs, start_time)
+    #     self._metrics[mode].clear()
+    #
+    #     if self.accelerator.is_main_process and self.log_completions:
+    #         if is_rich_available():
+    #             print_prompt_completions_sample(
+    #                 self._textual_logs["prompt"],
+    #                 self._textual_logs["completion"],
+    #                 self._textual_logs["rewards"],
+    #                 self._textual_logs["advantages"],
+    #                 self.state.global_step,
+    #                 self.num_completions_to_print,
+    #             )
+    #
+    #         if self.args.report_to and "wandb" in self.args.report_to and wandb.run is not None:
+    #             import pandas as pd
+    #
+    #             table = {
+    #                 "step": [str(self.state.global_step)] * len(self._textual_logs["prompt"]),
+    #                 "prompt": self._textual_logs["prompt"],
+    #                 "completion": self._textual_logs["completion"],
+    #                 **self._textual_logs["rewards"],
+    #                 "advantage": self._textual_logs["advantages"],
+    #             }
+    #             df = pd.DataFrame(table)
+    #             if self.wandb_log_unique_prompts:
+    #                 df = df.drop_duplicates(subset=["prompt"])
+    #             wandb.log({"completions": wandb.Table(dataframe=df)})
 
     # Ensure the model card is saved along with the checkpoint
     def _save_checkpoint(self, model, trial):
@@ -1886,10 +1965,16 @@ class Learner_MoISTrainer(Trainer):
                         "completion": completions_to_log,
                         "reward": rewards.tolist(),
                     }
+                    # for kk in table:
+                    #     print(f"{kk}:{len(table[kk])}")
 
+                    # torch.save(table,f"/userhome/Research_HUB/GPG/open-r1/wandb/debug/table.pt")
 
                     df = pd.DataFrame(table)
                     wandb.log({"completions": wandb.Table(dataframe=df)})
+        ####################################### 0728 ###############################################
+        # damp_history_advs = torch.zeros([self.args.per_device_eval_batch_size, 1],
+        #                                 dtype=self.model.dtype, device=self.model.device)
 
         return {
             "prompt_ids": prompt_ids,
@@ -1899,8 +1984,8 @@ class Learner_MoISTrainer(Trainer):
             "advantages": advantages,
             "old_per_token_logps": old_per_token_logps,
             "ref_per_token_logps": ref_per_token_logps,
-            "model_ids": self.state.global_step, #
-            "sampler_per_token_logps": sampler_per_token_logps, #
+            "model_ids": self.state.global_step, # 为了根据延迟计算lambdaT
+            "sampler_per_token_logps": sampler_per_token_logps, # 训练时这个是采样器的logp，评估时为了不报错，这个是学习器的logp
             # "history_advs": damp_history_advs,
         }
 
@@ -2045,7 +2130,7 @@ def main(script_args, training_args, model_args):
     )
 
     # 添加用于模型同步的回调
-    sync_weights_path = Path(os.getenv("SYNC_WEIGHTS_PATH", "./async_weights.pt"))
+    sync_weights_path = Path(os.getenv("SYNC_WEIGHTS_PATH", "/tmp/Qwen3-0.6B/gpg_async_weights.pt"))
     sync_steps = int(os.getenv("SYNC_SAMPLER_STEPS", "1"))
 
     # 将 trainer 实例自身传递给回调的构造函数
@@ -2131,7 +2216,7 @@ def main(script_args, training_args, model_args):
 
 
 if __name__ == "__main__":
-    parser = TrlParser((GRPOScriptArguments, HeteroRLConfig, ModelConfig))
+    parser = TrlParser((GRPOScriptArguments, GPGConfig, ModelConfig))
     script_args, training_args, model_args = parser.parse_args_and_config(fail_with_unknown_args=False)
     main(script_args, training_args, model_args)
 

@@ -20,6 +20,7 @@ import datasets
 import torch
 import transformers
 from datasets import load_dataset, load_from_disk
+from sympy.abc import alpha
 from transformers import set_seed
 from transformers.trainer_utils import get_last_checkpoint, speed_metrics
 
@@ -156,6 +157,11 @@ class OnlineRLTrainer(GRPOTrainer):
         ################## 样本-level 的P和Q ##################
         sampler_seq_lopp =  (old_per_token_logps * completion_mask).sum(dim=1) / completion_mask.sum(dim=1).clamp(min=1.0)
         learner_seq_lopp = (per_token_logps * completion_mask).sum(dim=1) / completion_mask.sum(dim=1).clamp(min=1.0)
+
+        ## policy entropy https://arxiv.org/pdf/2505.22617
+        sampler_entropy = -sampler_seq_lopp.detach().mean()
+        learner_entropy = -learner_seq_lopp.detach().mean()
+
         avg_sampler_seq_p = sampler_seq_lopp.exp().mean().detach()
         std_sampler_seq_p = sampler_seq_lopp.exp().std().detach()
         adv_std = advantages.std()
@@ -166,7 +172,7 @@ class OnlineRLTrainer(GRPOTrainer):
         E_qQ =  (normlized_q * sampler_seq_p).sum()
 
         # Compute the loss
-        if self.loss_type in ["grpo", "bnpo", "dr_grpo"]:
+        if self.loss_type in ["grpo", "bnpo", "dr_grpo","delta_ln"]:
             coef_1 = torch.exp(per_token_logps - old_per_token_logps)
             coef_2 = torch.clamp(coef_1, 1 - self.epsilon_low, 1 + self.epsilon_high)
             # Two-sided clipping
@@ -185,7 +191,17 @@ class OnlineRLTrainer(GRPOTrainer):
             elif self.loss_type == "bnpo":
                 loss = (per_token_loss * completion_mask).sum() / completion_mask.sum().clamp(min=1.0)
             elif self.loss_type == "dr_grpo":
-                loss = (per_token_loss * completion_mask).sum() / (per_token_loss.size(0) * self.max_completion_length)         
+                loss = (per_token_loss * completion_mask).sum() / (per_token_loss.size(0) * self.max_completion_length)
+            elif self.loss_type == "delta_ln": #∆L Normalization https://arxiv.org/pdf/2509.07558
+                alpha = 0.75  # hyper-params (In paper: α = 0.75 for Math, α = 1 for CountDown)
+                ## $L_i^{-\alpha}$
+                L_alpha  = completion_mask.sum(-1).clamp(min=1)**(-alpha)
+                ## $\Sigma_{i=1}^{i=Batch-size}$ $L_i^{-\alpha}$ * M
+                LM = L_alpha.sum() *  self.max_completion_length
+                coef_deltaL = (L_alpha/LM).unsqueeze(1) # [bs, sql]
+                loss = (coef_deltaL * per_token_loss * completion_mask).sum()
+
+
         elif self.loss_type in ["EqP", "gepo", "gspo"]:
             if self.loss_type == "EqP":
                 coef_1 = learner_seq_p / E_qP
@@ -220,7 +236,7 @@ class OnlineRLTrainer(GRPOTrainer):
         var_ratio_gspo = (ratio_gspo.square() * normlized_q).sum() - (ratio_gspo * normlized_q).sum().square()
         var_P_EqQ =  (ratio_pEqQ.square() * normlized_q).sum() - (ratio_pEqQ * normlized_q).sum().square()
         var_P_EqP =  (ratio_pEqP.square() * normlized_q).sum() - (ratio_pEqP * normlized_q).sum().square()
-        if self.loss_type in ["grpo", "bnpo", "dr_grpo"]:
+        if self.loss_type in ["grpo", "bnpo", "dr_grpo","delta_ln"]:
             # var_coef1 = (coef_1.detach().square() * normlized_token_q  * completion_mask).sum() - (coef_1.detach() * normlized_token_q * completion_mask).sum().square()
             # var_coef2 = (coef_2.detach().square() * normlized_token_q  * completion_mask).sum() - (coef_2.detach() * normlized_token_q * completion_mask).sum().square()
       
@@ -238,22 +254,26 @@ class OnlineRLTrainer(GRPOTrainer):
         self._metrics[mode]["ratio/mean"].append(coef_1.nanmean().item())
         self._metrics[mode]["ratio/max"].append(nanmax(coef_1).item())
         self._metrics[mode]["ratio/min"].append(nanmin(coef_1).item())
-        self._metrics[mode]["var_ratio_grpo"].append(var_ratio_grpo.item())
-        self._metrics[mode]["var_ratio_pq"].append(var_ratio_gspo.item())
-        self._metrics[mode]["var_P_EqQ"].append(var_P_EqQ.item())
-        self._metrics[mode]["var_P_EqP"].append(var_P_EqP.item())
+        # self._metrics[mode]["var_ratio_grpo"].append(var_ratio_grpo.item())
+        # self._metrics[mode]["var_ratio_pq"].append(var_ratio_gspo.item())
+        # self._metrics[mode]["var_P_EqQ"].append(var_P_EqQ.item())
+        # self._metrics[mode]["var_P_EqP"].append(var_P_EqP.item())
 
-        self._metrics[mode]["sts_var/ratio_grpo"].append(ratio_grpo.var().item())
+        # self._metrics[mode]["sts_var/ratio_grpo"].append(ratio_grpo.var().item())
         self._metrics[mode]["sts_var/ratio_pq"].append(ratio_gspo.var().item())
-        self._metrics[mode]["sts_var/ratio_pEqQ"].append(ratio_pEqQ.var().item())
-        self._metrics[mode]["sts_var/ratio_pEqP"].append(ratio_pEqP.var().item())
+        # self._metrics[mode]["sts_var/ratio_pEqQ"].append(ratio_pEqQ.var().item())
+        # self._metrics[mode]["sts_var/ratio_pEqP"].append(ratio_pEqP.var().item())
+
+        ## policy entropy https://arxiv.org/pdf/2505.22617
+        self._metrics[mode]["sampler_entropy"].append(sampler_entropy.item())
+        self._metrics[mode]["learner_entropy"].append(learner_entropy.item())
 
         self._metrics[mode]["var_coef1"].append(var_coef1.item())
         self._metrics[mode]["var_coef2"].append(var_coef2.item())
-        self._metrics[mode]["ratio_grpo"].append(ratio_grpo.nanmean().item())
+        # self._metrics[mode]["ratio_grpo"].append(ratio_grpo.nanmean().item())
         self._metrics[mode]["ratio_pq"].append(ratio_gspo.nanmean().item())
-        self._metrics[mode]["ratio_pEqQ"].append(ratio_pEqQ.nanmean().item())
-        self._metrics[mode]["ratio_pEqP"].append(ratio_pEqP.nanmean().item())
+        # self._metrics[mode]["ratio_pEqQ"].append(ratio_pEqQ.nanmean().item())
+        # self._metrics[mode]["ratio_pEqP"].append(ratio_pEqP.nanmean().item())
         self._metrics[mode]["adv_std"].append(adv_std.item())
         self._metrics[mode]["avg_sampler_seq_p"].append(avg_sampler_seq_p.item())
         self._metrics[mode]["std_sampler_seq_p"].append(std_sampler_seq_p.item())
@@ -263,7 +283,7 @@ class OnlineRLTrainer(GRPOTrainer):
         #     self._metrics[mode]["kl"].append(self.accelerator.gather(mean_kl).nanmean().item())
 
         # Compute the clipped probability ratios
-        if self.loss_type in ["grpo", "bnpo", "dr_grpo"]:
+        if self.loss_type in ["grpo", "bnpo", "dr_grpo","delta_ln"]:
             is_low_clipped = (coef_1 < 1 - self.epsilon_low) & (advantages.unsqueeze(1) < 0)
             is_high_clipped = (coef_1 > 1 + self.epsilon_high) & (advantages.unsqueeze(1) > 0)
             is_region_clipped = is_low_clipped | is_high_clipped
@@ -687,6 +707,8 @@ class OnlineRLTrainer(GRPOTrainer):
                         "reward": rewards.tolist(),
                     }
 
+                    # print(f"table is done (sampler_script_v2.py)")
+                    # torch.save(table,f"/userhome/Research_HUB/GPG/open-r1/wandb/debug/table.pt")
 
                     df = pd.DataFrame(table)
                     wandb.log({"completions": wandb.Table(dataframe=df)})
