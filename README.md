@@ -6,6 +6,21 @@ Figure-1: GEPO improves upon GRPO and GSPO by employing group-level importance w
 
 The code is built on [trl](https://github.com/huggingface/trl)/[openR1](https://github.com/huggingface/open-r1).
 
+### Importance weight computation for different policy optimization methods
+```python
+# Token level
+if self.loss_type in ["grpo","dr_grpo","bnpo"]: 
+    coef_1 = learner_token_p / sampler_token_p
+# Sequence level
+elif self.loss_type == "gspo":  
+    coef_1 = learner_seq_p / sampler_seq_p
+# Group level
+elif self.loss_type == "gepo": 
+    normalized_q = sampler_seq_p.detach() / (sampler_seq_p.sum().detach())
+    coef_1 = learner_seq_p / (normalized_q * sampler_seq_p).sum() 
+```
+
+
 ### Heterogeneous Reinforcement Learning
 
 Enter the current directory (if the directory is different, you need to replace the corresponding path variables in the script).
