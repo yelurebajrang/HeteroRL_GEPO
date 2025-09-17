@@ -13,7 +13,7 @@
 ## 📰 Latest Update: ∆L Normalization Integrated!
 
 <details>
-<summary>🎯 <strong>Added Implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
+<summary>🎯 <strong> News: Added Implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
 
 <br>
 
