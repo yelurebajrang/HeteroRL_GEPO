@@ -6,6 +6,15 @@ Figure-1: GEPO improves upon GRPO and GSPO by employing group-level importance w
 
 The code is built on [trl](https://github.com/huggingface/trl)/[openR1](https://github.com/huggingface/open-r1).
 
+
+<details>
+<summary>📰 Latest News (Click to Expand)</summary>
+
+- 📅 2025-09-16: Added the [∆L Normalization](https://arxiv.org/abs/2509.07558) algorithm.
+
+</details>
+
+
 ### Importance weight computation for different policy optimization methods
 ```python
 # Token level
