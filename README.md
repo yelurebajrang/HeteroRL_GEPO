@@ -10,7 +10,7 @@
 
 ---
 
-## 📰 Latest Update: ∆L Normalization Integrated!
+## 📰 Latest Update: ∆L Normalization Integrated into HeteroRL!
 
 <details>
 <summary>📢 <strong> Update: Added Implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
