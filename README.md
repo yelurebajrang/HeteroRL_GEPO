@@ -19,19 +19,6 @@ The code is built on [trl](https://github.com/huggingface/trl)/[openR1](https://
 🧑‍💻 **Authors**: Zhiyuan He, Xufang Luo (Microsoft Research), Yike Zhang (Tsinghua), et al.  
 🔗 **Code**: Code is based on [github.com/zerolllin/Delta-L-Normalization](https://github.com/zerolllin/Delta-L-Normalization)
 
----
-
-
-### 🆚 **Theoretical Advantage**
-| Method       | Unbiased? | Gradient Variance | Coefficient of Variation (CV) |
-|--------------|-----------|-------------------|-------------------------------|
-| GRPO         | ❌ Biased | Medium            | Low                           |
-| DAPO         | ❌ Biased | High              | High                          |
-| Dr. GRPO     | ✅        | High              | High                          |
-| **∆L Norm (Ours)** | ✅        | **Minimum**       | **Lowest**                    |
-
----
-
 > 💡 **Pro Tip**: Set `α=1` for minimum variance (default). Use `α=0.75` for Math tasks to better leverage long, informative responses.
 
 </details>
