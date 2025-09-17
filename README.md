@@ -257,11 +257,11 @@ bash sh_dir/HeteroRL_Sampler_4gpus.sh sampler_script_checkpoint GEPO_think_1th v
 ## 🌐 Online Reinforcement Learning (4×A100 80GB)
 
 Supports multiple policy optimization methods:
-- [`grpo`](https://arxiv.org/abs/2402.03300)
-- [`bnpo`](https://arxiv.org/abs/2506.02864)
-- [`dr_grpo`](https://arxiv.org/abs/2503.20783)
-- [`gspo`](https://arxiv.org/abs/2507.18071)
-- [`∆L Norm`](https://arxiv.org/abs/2509.07558)
+- [`GRPO`](https://arxiv.org/abs/2402.03300): DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models
+- [`BNPO`](https://arxiv.org/abs/2506.02864): Beta Normalization Policy Optimization
+- [`Dr.GRPO`](https://arxiv.org/abs/2503.20783): Understanding R1-Zero-Like Training: A Critical Perspective
+- [`GSPO`](https://arxiv.org/abs/2507.18071): Group Sequence Policy Optimization
+- [`∆L Normalization`](https://arxiv.org/abs/2509.07558): Rethink Loss Aggregation in RLVR
 - **`gepo` (ours)** 👈
 
 ```bash
