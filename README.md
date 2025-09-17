@@ -12,7 +12,7 @@
 
 <h2 align="center">✨ GEPO: Group Expectation Policy Optimization for Heterogeneous RL</h2>
 
-📅 **Release**: 2025 (arXiv)  
+📅 **Release**: Aug 25, 2025 (arXiv)  
 📄 **Paper**: [Group Expectation Policy Optimization for Heterogeneous Reinforcement Learning](https://arxiv.org/abs/XXXX.XXXXX)  
 🧑‍💻 **Authors**: Han Zhang, Ruibin Zheng, et al. (Pengcheng Lab / Heterogeneous Large Model Research Team)  
 🔗 **Code**: [https://github.com/HanlardResearch/HeteroRL_GEPO.git](https://github.com/HanlardResearch/HeteroRL_GEPO.git)
@@ -28,7 +28,7 @@ Training giant AI models now requires global, decentralized compute. But network
 ✅ **Theoretically Proven**: Exponentially reduces importance sampling variance (Theorem 1).  
 ✅ **Extremely Robust**: Only **3% performance drop** under extreme 1800s latency.  
 ✅ **Plug-and-Play**: Easy to integrate — modifies only the importance weight calculation.  
-✅ **Better Everywhere**: Outperforms GRPO/GSPO even in zero-delay (synchronous) settings.
+✅ **Better Everywhere**: Outperforms GRPO/GSPO even in zero-delay (online) settings.
 
 > 📊 **Key Results (Qwen3-1.7B)**:
 > - **Zero-Delay**: GEPO Last = **41.4** vs. GSPO Last = **24.3** (+17.1 gain).  
@@ -76,7 +76,7 @@ GEPO is the engine of **HeteroRL**, a framework that decouples sampling and lear
 
 <h2 align="center">✨ ∆L Normalization: Rethink Loss Aggregation in RLVR</h2>
 
-📅 **Release Date**: September 9, 2025 (arXiv)  
+📅 **Release Date**: Sep 9, 2025 (arXiv)  
 📄 **Paper**: [∆L Normalization: Rethink Loss Aggregation in RLVR](https://arxiv.org/abs/2509.07558)  
 🧑‍💻 **Authors**: Zhiyuan He, Xufang Luo (Microsoft Research), Yike Zhang (Tsinghua), et al.  
 🔗 **Implementation**: Based on [Delta-L-Normalization](https://github.com/zerolllin/Delta-L-Normalization)
