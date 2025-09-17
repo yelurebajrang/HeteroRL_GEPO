@@ -158,14 +158,7 @@ elif self.loss_type == "gepo":
 
 ```bash
 cd ./open-r1
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
-bash sh_dir/HeteroRL_Learner_4gpus.sh \
-    learner_script_checkpoint \
-    GEPO_think_1th \
-    1 \
-    v6b \
-    gepo \
-    1L2S_GEPO_diff32_think
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash sh_dir/HeteroRL_Learner_4gpus.sh learner_script_checkpoint GEPO_think_1th 1 v6b gepo 1L2S_GEPO_diff32_think
 ```
 
 ### 2️⃣ Launch Samplers (Run in Sequence)
@@ -193,10 +186,8 @@ Supports multiple loss types:
 - **`gepo` (ours)** 👈
 
 ```bash
-cd /userhome/Research_HUB/GPG/open-r1
-CUDA_VISIBLE_DEVICES="0,1,2,3" \
-MASTER_PORT=29510 \
-bash sh_dir/Online_gXpo_4gpus.sh gepo
+cd ./open-r1
+CUDA_VISIBLE_DEVICES="0,1,2,3" MASTER_PORT=29510 bash sh_dir/Online_gXpo_4gpus.sh gepo
 ```
 
 ---
