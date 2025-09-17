@@ -39,7 +39,6 @@ In RLVR, response lengths vary dramatically — leading to **high gradient varia
 
 </details>
 
----
 
 
 <details>
