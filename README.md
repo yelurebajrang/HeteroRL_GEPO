@@ -13,7 +13,7 @@
 ## 📰 Latest Update: ∆L Normalization Integrated!
 
 <details>
-<summary>🎯 <strong> News: Added Implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
+<summary>🎯 <strong> Update: Added Implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
 
 <br>
 
@@ -40,6 +40,38 @@ In RLVR, response lengths vary dramatically — leading to **high gradient varia
 </details>
 
 ---
+
+
+<details>
+<summary>🎯 <strong>Update: Added Implementation of GSPO — Stable, Efficient & MoE-Friendly!</strong></summary>
+
+<br>
+
+<h2 align="center">✨ GSPO: Group Sequence Policy Optimization for Scalable RL</h2>
+
+📅 **Release Date**: July 28, 2025 (arXiv v2)  
+📄 **Paper**: [**Group Sequence Policy Optimization**](https://arxiv.org/abs/2507.18071)  
+🧑‍💻 **Authors**: Chujie Zheng, Shixuan Liu, Mingze Li, Bowen Yu, et al. (Qwen Team, Alibaba)  
+
+---
+
+### ⚡ Why It Matters
+Existing methods like **GRPO** suffer from **catastrophic instability** when scaling to large models — especially **MoE architectures** — due to noisy token-level importance ratios.  
+**GSPO fixes this at the root**:
+✅ **Sequence-level importance weights** — Matches reward granularity & reduces variance  
+✅ **Stable MoE training** — No “Routing Replay” hacks needed 🚫  
+✅ **Higher training efficiency** — Achieves better performance with same compute  
+✅ **Simpler infrastructure** — Compatible with inference-engine likelihoods (no recompute needed)
+
+> 💡 **Pro Tip**:  
+> - Use `clip_range=(3e-4, 4e-4)` for optimal stability (default in Qwen3 RL training).  
+> - For multi-turn RL, try **GSPO-token** variant — enables per-token advantage while preserving sequence-level stability.
+
+</details>
+
+---
+
+
 
 ## 🧠 Importance Weight Computation (Policy Optimization Methods)
 
