@@ -21,27 +21,6 @@ The code is built on [trl](https://github.com/huggingface/trl)/[openR1](https://
 
 ---
 
-### ⚡ **Why It Matters**
-In Reinforcement Learning with Verifiable Rewards (**RLVR**), response lengths vary wildly — from dozens to thousands of tokens. This causes:
-- ❌ **High gradient variance** → unstable training
-- ❌ **Biased updates** in existing methods (GRPO, DAPO)
-
-**∆L Normalization solves both problems**:
-✅ **Unbiased Estimator** — Matches true policy gradient expectation.  
-✅ **Minimum Variance** — Theoretically proven to minimize gradient noise (when α=1).  
-✅ **Plug-and-Play** — <10 lines of code to implement.
-
----
-
-### 📈 **Key Results**
-Extensive experiments on **Qwen2.5-3B/7B** across **CountDown** & **Math** tasks show:
-- 🥇 **Highest Accuracy**: Consistently outperforms GRPO, DAPO, Dr. GRPO.
-- 📉 **Most Stable Training**: Near-perfect monotonicity score (>0.94 Pearson correlation).
-- 🧠 **Better Utilization of Long Responses**: Adaptive α parameter (α=0.75 optimal for Math).
-
-> _“∆L Normalization changes how we think about normalization in RLVR.”_ — Paper Authors
-
----
 
 ### 🆚 **Theoretical Advantage**
 | Method       | Unbiased? | Gradient Variance | Coefficient of Variation (CV) |
