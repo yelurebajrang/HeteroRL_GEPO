@@ -4,9 +4,66 @@
 > **Paper**: [GEPO: Group Expectation Policy Optimization for Heterogeneous Reinforcement Learning](https://arxiv.org/abs/2508.17850)  
 > **Codebase**: Built on [`trl`](https://github.com/huggingface/trl) & [`open-r1`](https://github.com/huggingface/open-r1)
 
+
+<details open>
+<summary>📢 <strong> BREAKING: GEPO — The Algorithm That Makes Decentralized AI Training Possible!</strong></summary>
+
+<br>
+
+<h2 align="center">✨ GEPO: Group Expectation Policy Optimization for Heterogeneous RL</h2>
+
+📅 **Release**: 2025 (arXiv)  
+📄 **Paper**: [Group Expectation Policy Optimization for Heterogeneous Reinforcement Learning](https://arxiv.org/abs/XXXX.XXXXX)  
+🧑‍💻 **Authors**: Han Zhang, Ruibin Zheng, et al. (Pengcheng Lab / Heterogeneous Large Model Research Team)  
+🔗 **Code**: [https://github.com/HanlardResearch/HeteroRL_GEPO.git](https://github.com/HanlardResearch/HeteroRL_GEPO.git)
+
+---
+
+### ⚡ Why It Matters
+
+Training giant AI models now requires global, decentralized compute. But network delays cause “policy staleness,” making traditional RL algorithms (like GRPO, GSPO) **crash** due to exploding gradient variance.
+
+**GEPO solves this.** By replacing unstable per-token weights with **Group Expectation Importance Weighting**, it exponentially reduces variance under high latency — enabling stable training even with **1800-second delays**.
+
+✅ **Theoretically Proven**: Exponentially reduces importance sampling variance (Theorem 1).  
+✅ **Extremely Robust**: Only **3% performance drop** under extreme 1800s latency.  
+✅ **Plug-and-Play**: Easy to integrate — modifies only the importance weight calculation.  
+✅ **Better Everywhere**: Outperforms GRPO/GSPO even in zero-delay (synchronous) settings.
+
+> 📊 **Key Results (Qwen3-1.7B)**:
+> - **Zero-Delay**: GEPO Last = **41.4** vs. GSPO Last = **24.3** (+17.1 gain).  
+> - **High-Delay (64 steps)**: GEPO Last = **43.5** (no drop) vs. GSPO Last = **20.9**.  
+> - **Extreme Test (1800s)**: Performance degradation **< 3%**.
+
+---
+
+### 🧠 The Core Idea: Think Groups, Not Tokens
+
+Traditional methods use `p(y|x) / q(y|x)`, which explodes when `q(y|x)` is small. GEPO’s genius is simple:
+
+**Group Expectation Weight:**
+`w_GEPO(y|x) = p(y|x) / Ê_q[q(y|x)]`
+
+Where `Ê_q[q(y|x)]` is estimated from a group of responses `{y1...yG}` for the same prompt `x`:
+`Ê_q[q(y|x)] ≈ Σ(q(yi|x)²) / Σ(q(yi|x))`
+
+This group-level denominator **smooths out wild fluctuations**, preventing gradient explosions and keeping training stable — no matter how stale the data is.
+
 ![GEPO Architecture](./MainFig.png)
 
 > **Figure 1**: GEPO improves upon GRPO and GSPO by employing **group-level importance weights** to enhance training stability. It demonstrates superior performance in both **zero-delay (online)** and **high-delay (up to 1800s)** heterogeneous RL scenarios.
+
+---
+
+### 🚀 The Future: Decentralized AI is Here
+
+GEPO is the engine of **HeteroRL**, a framework that decouples sampling and learning across global nodes. This isn’t just an algorithm — it’s the foundation for community-driven, globally distributed AI training.
+
+> 💡 **Pro Tip**:  
+> - Use GEPO as your **default RL algorithm** — it’s more stable everywhere.  
+> - For maximum robustness in production, combine it with the “Defensive Sampling” mechanism (Appendix F).
+
+</details>
 
 ---
 
