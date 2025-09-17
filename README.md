@@ -68,6 +68,63 @@ Existing methods like **GRPO** suffer from **catastrophic instability** when sca
 
 </details>
 
+
+<details>
+<summary>📢 <strong>Update: Added Implementation of Dr. GRPO — Unbiased & Token-Efficient!</strong></summary>
+
+<br>
+
+<h2 align="center">✨ Dr. GRPO: Group Relative Policy Optimization Done Right</h2>
+
+📅 **Release Date**: March 26, 2025 (arXiv)  
+📄 **Paper**: [**Understanding R1-Zero-Like Training: A Critical Perspective**](https://arxiv.org/abs/2503.20783)  
+🧑‍💻 **Authors**: Zichen Liu, Changyu Chen, Wenjun Li, et al. (Sea AI Lab, NUS, SMU)
+
+---
+
+### ⚡ Why It Matters
+Original **GRPO** introduces **length bias** and **difficulty bias** — artificially inflating response lengths (especially for *incorrect* answers) and skewing updates toward “easier” questions.  
+**Dr. GRPO removes these biases at the source**:
+✅ **Unbiased gradient estimator** — Faithfully implements true policy gradient objective  
+✅ **Token-efficient training** — Prevents wasteful generation of long, incorrect responses 🚫📏  
+✅ **Plug-and-play replacement** — Drop-in substitute for GRPO with minimal code change  
+✅ **Preserves reasoning performance** — Matches or exceeds GRPO’s final accuracy with less compute
+
+> 💡 **Pro Tip**:  
+> - Use Dr. GRPO when you want **stable length growth** (only for correct reasoning, not noise).  
+> - Combine with **∆L Normalization** for double variance reduction + unbiasedness.
+
+</details>
+
+<details>
+<summary>📢 <strong>Update: Added Implementation of BNPO — Adaptive, Low-Variance & Generalizes GRPO!</strong></summary>
+
+<br>
+
+<h2 align="center">✨ BNPO: Beta Normalization Policy Optimization for Stable RL Training</h2>
+
+📅 **Release Date**: June 3, 2025 (arXiv)  
+📄 **Paper**: [**BNPO: Beta Normalization Policy Optimization**](https://arxiv.org/abs/2506.02864)  
+🧑‍💻 **Authors**: Changyi Xiao, Mengdi Zhang, Yixin Cao (Fudan University, Meituan)  
+
+---
+
+### ⚡ Why It Matters
+Current RL methods like **GRPO** and **REINFORCE** use **static reward normalization** — fixed throughout training — which fails to adapt to the evolving policy distribution, leading to unstable gradients and suboptimal convergence.  
+**BNPO solves this with dynamic, theoretically grounded normalization**:
+✅ **Adaptive Beta normalization** — Parameters `(α, β)` update dynamically with policy evolution  
+✅ **Proven variance reduction** — Theoretically minimizes gradient variance under binary rewards  
+✅ **Generalizes GRPO & REINFORCE** — Reduces to them under specific `(α, β)` settings  
+✅ **Handles complex rewards** — Via novel *Advantage Decomposition* mechanism
+
+> 💡 **Pro Tip**:  
+> - BNPO automatically sets `α = (1+a)/3`, `β = (1+b)/3` — no manual tuning needed.  
+> - Use Advantage Decomposition when combining multiple reward signals (e.g., accuracy + format).
+
+</details>
+
+
+
 ---
 
 
