@@ -234,7 +234,7 @@ bash sh_dir/HeteroRL_Sampler_4gpus.sh sampler_script_checkpoint GEPO_think_1th v
 
 ## 🌐 Online Reinforcement Learning (4×A100 80GB)
 
-Supports multiple loss types:
+Supports multiple policy optimization methods:
 - [`grpo`](https://arxiv.org/abs/2402.03300)
 - [`bnpo`](https://arxiv.org/abs/2506.02864)
 - [`dr_grpo`](https://arxiv.org/abs/2503.20783)
