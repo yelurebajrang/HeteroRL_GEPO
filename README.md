@@ -1,5 +1,5 @@
 
-# 🚀 GEPO: Group Expectation Policy Optimization for Heterogeneous Reinforcement Learning
+# 📢 GEPO: Group Expectation Policy Optimization for Heterogeneous Reinforcement Learning
 
 > **Paper**: [GEPO: Group Expectation Policy Optimization for Heterogeneous Reinforcement Learning](https://arxiv.org/abs/2508.17850)  
 > **Codebase**: Built on [`trl`](https://github.com/huggingface/trl) & [`open-r1`](https://github.com/huggingface/open-r1)
@@ -13,7 +13,7 @@
 ## 📰 Latest Update: ∆L Normalization Integrated!
 
 <details>
-<summary>🎯 <strong> Update: Added Implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
+<summary>📢 <strong> Update: Added Implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
 
 <br>
 
