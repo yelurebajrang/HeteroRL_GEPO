@@ -8,9 +8,52 @@ The code is built on [trl](https://github.com/huggingface/trl)/[openR1](https://
 
 
 <details>
-<summary>📰 Latest News (Click to Expand)</summary>
+<summary>🚀 <strong>News: Added implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
 
-- 📅 2025-09-16: Added the [∆L Normalization](https://arxiv.org/abs/2509.07558) algorithm.
+<br>
+
+<h2 align="center">🎯 ∆L Normalization: Rethink Loss Aggregation in RLVR</h2>
+
+📅 **Date**: September 9, 2025 (arXiv)  
+📄 **Paper**: [**∆L Normalization: Rethink Loss Aggregation in RLVR**](https://arxiv.org/abs/2509.07558)  
+🧑‍💻 **Authors**: Zhiyuan He, Xufang Luo (Microsoft Research), Yike Zhang (Tsinghua), et al.  
+🔗 **Code**: Code is based on [github.com/zerolllin/Delta-L-Normalization](https://github.com/zerolllin/Delta-L-Normalization)
+
+---
+
+### ⚡ **Why It Matters**
+In Reinforcement Learning with Verifiable Rewards (**RLVR**), response lengths vary wildly — from dozens to thousands of tokens. This causes:
+- ❌ **High gradient variance** → unstable training
+- ❌ **Biased updates** in existing methods (GRPO, DAPO)
+
+**∆L Normalization solves both problems**:
+✅ **Unbiased Estimator** — Matches true policy gradient expectation.  
+✅ **Minimum Variance** — Theoretically proven to minimize gradient noise (when α=1).  
+✅ **Plug-and-Play** — <10 lines of code to implement.
+
+---
+
+### 📈 **Key Results**
+Extensive experiments on **Qwen2.5-3B/7B** across **CountDown** & **Math** tasks show:
+- 🥇 **Highest Accuracy**: Consistently outperforms GRPO, DAPO, Dr. GRPO.
+- 📉 **Most Stable Training**: Near-perfect monotonicity score (>0.94 Pearson correlation).
+- 🧠 **Better Utilization of Long Responses**: Adaptive α parameter (α=0.75 optimal for Math).
+
+> _“∆L Normalization changes how we think about normalization in RLVR.”_ — Paper Authors
+
+---
+
+### 🆚 **Theoretical Advantage**
+| Method       | Unbiased? | Gradient Variance | Coefficient of Variation (CV) |
+|--------------|-----------|-------------------|-------------------------------|
+| GRPO         | ❌ Biased | Medium            | Low                           |
+| DAPO         | ❌ Biased | High              | High                          |
+| Dr. GRPO     | ✅        | High              | High                          |
+| **∆L Norm (Ours)** | ✅        | **Minimum**       | **Lowest**                    |
+
+---
+
+> 💡 **Pro Tip**: Set `α=1` for minimum variance (default). Use `α=0.75` for Math tasks to better leverage long, informative responses.
 
 </details>
 
