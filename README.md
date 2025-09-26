@@ -89,9 +89,38 @@ GEPO is the engine of **HeteroRL**, a framework that decouples sampling and lear
 
 ---
 
-## 📰 Latest Update: ∆L Normalization Integrated into HeteroRL!
+## 📰 Latest Update: ∆L Normalization and GMPO Integrated into HeteroRL!
 
 <details open>
+<summary>📢 <strong>Update: Added Implementation of GMPO — Geometric-Mean Policy Optimization!</strong></summary>
+
+<br>
+
+<h2 align="center">✨ Geometric-Mean Policy Optimization (GMPO): Stabilizing GRPO with Outlier-Robust Aggregation</h2>
+
+📅 **Release Date**: Jul 28, 2025 (arXiv)  
+📄 **Paper**: [Geometric-Mean Policy Optimization](https://arxiv.org/abs/2507.20673)  
+🧑‍💻 **Authors**: Yuzhong Zhao, Yue Liu (UCAS), Junpeng Liu (CUHK), Jingye Chen (HKUST), and Microsoft Research Team  
+🔗 **Implementation**: Based on [GMPO](https://github.com/callsys/GMPO)
+
+---
+
+### ⚡ Why It Matters
+GRPO optimizes the **arithmetic mean** of token-level rewards, which is highly sensitive to **outlier importance-weighted rewards**, causing unstable policy updates and extreme importance sampling ratios.  
+GMPO addresses this by switching to the **geometric mean**, which is inherently **robust to outliers** and leads to:
+✅ **Stable importance sampling ratios** (narrower range, fewer extremes)  
+✅ **Lower training variance** and **more reliable gradients**  
+✅ **Enhanced exploration** via wider clipping (e.g., `(e⁻⁰·⁴, e⁰·⁴)`) without sacrificing stability  
+✅ **Consistent gains**: **+4.1%** on math benchmarks and **+1.4%** on multimodal reasoning (Geometry3K)
+
+> 💡 **Pro Tips**:  
+> - Use **token-level clipping** (not sequence-level) for finer gradient control.  
+> - Set clipping range to `(e⁻⁰·⁴, e⁰·⁴)` to balance exploration and stability.  
+> - GMPO maintains **higher token entropy** and **lower KL divergence** from the pre-RL model — ideal for scalable RL training.
+
+</details>
+
+<details>
 <summary>📢 <strong> Update: Added Implementation of ∆L Normalization — Unbiased & Minimum-Variance!</strong></summary>
 
 <br>
