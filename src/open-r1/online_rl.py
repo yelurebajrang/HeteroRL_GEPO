@@ -29,7 +29,7 @@ from open_r1.rewards import get_reward_funcs
 from open_r1.utils import get_tokenizer
 from open_r1.utils.callbacks import get_callbacks
 from open_r1.utils.wandb_logging import init_wandb_training
-from open_r1.utils.data_utils import custom_loading_dataset
+from open_r1.utils.data_utils import custom_loading_dataset, loading_deepmath
 from trl import GRPOTrainer, ModelConfig, TrlParser, get_peft_config
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 from torch.utils.data import DataLoader, Dataset
@@ -121,7 +121,7 @@ def nanmax(tensor: torch.Tensor) -> torch.Tensor:
 
 class OnlineRLTrainer(GRPOTrainer):
     """
-    online RL trainer for GRPO/GSPO/EqQ
+    online RL trainer for GRPO/GSPO/GEPO/GMPO/BNPO/DeltaLN/Dr.GRPO
     """
     def __init__(self, *args, **kwargs):
         self.metric_key_prefix = ""
@@ -154,11 +154,11 @@ class OnlineRLTrainer(GRPOTrainer):
             per_token_logps.detach() if inputs["old_per_token_logps"] is None else inputs["old_per_token_logps"]
         )
 
-        ################## 样本-level 的P和Q ##################
+        ################## sample-level ##################
         sampler_seq_lopp =  (old_per_token_logps * completion_mask).sum(dim=1) / completion_mask.sum(dim=1).clamp(min=1.0)
         learner_seq_lopp = (per_token_logps * completion_mask).sum(dim=1) / completion_mask.sum(dim=1).clamp(min=1.0)
 
-        ## policy entropy https://arxiv.org/pdf/2505.22617
+        # Policy Entropy  https://arxiv.org/pdf/2505.22617
         sampler_entropy = -sampler_seq_lopp.detach().mean()
         learner_entropy = -learner_seq_lopp.detach().mean()
 
@@ -200,7 +200,17 @@ class OnlineRLTrainer(GRPOTrainer):
                 LM = L_alpha.sum() *  self.max_completion_length
                 coef_deltaL = (L_alpha/LM).unsqueeze(1) # [bs, sql]
                 loss = (coef_deltaL * per_token_loss * completion_mask).sum()
-
+        elif self.loss_type == "gmpo": #  Geometric-Mean Policy Optimization https://arxiv.org/pdf/2507.20673
+            # Clipping at token-level & Clipping wider
+            sgn_A = torch.sign(advantages)
+            coef_1 = sgn_A.unsqueeze(1) * (per_token_logps - old_per_token_logps)
+            coef_2 = torch.clamp(coef_1, 1 - self.epsilon_low, 1 + self.epsilon_high)
+            sgn_A_log_probs_diff_min = torch.min(coef_1, coef_2)
+            log_probs_diff_min = sgn_A.unsqueeze(1) * sgn_A_log_probs_diff_min
+            # Geometric-Mean Policy Optimization
+            importance_sampling_ratio = torch.exp(
+                (log_probs_diff_min * completion_mask).sum(-1) / completion_mask.sum(-1).clamp(min=1.0))
+            loss = -(advantages * importance_sampling_ratio).mean()
 
         elif self.loss_type in ["EqP", "gepo", "gspo"]:
             if self.loss_type == "EqP":
@@ -635,7 +645,7 @@ class OnlineRLTrainer(GRPOTrainer):
         else:
             # Normalize the rewards to compute the advantages
             advantages = rewards - mean_grouped_rewards
-            if self.loss_type in ["grpo", "gspo"] or self.scale_rewards:
+            if self.scale_rewards:
                 advantages = advantages / (std_grouped_rewards + 1e-4)
 
         # Slice to keep only the local part of the data
@@ -769,9 +779,13 @@ def main(script_args, training_args, model_args):
     # handle dataset
     # Load the dataset
     if 'simplelr_qwen_level3to5' in script_args.dataset_name:
-        dataset = custom_loading_dataset(script_args.dataset_name, max_length=training_args.max_prompt_length,
+        dataset = custom_loading_dataset(script_args.dataset_name,
+                                         max_length=training_args.max_prompt_length,
                                          tokenizer=tokenizer)
-
+    elif "deepmath" in script_args.dataset_name:
+        dataset = loading_deepmath(script_args.dataset_name,
+                                   max_length=training_args.max_prompt_length,
+                                   tokenizer=tokenizer)
     else:
         dataset = load_dataset(script_args.dataset_name, name=script_args.dataset_config)
 

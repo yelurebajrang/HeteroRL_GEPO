@@ -791,6 +791,18 @@ class Learner_MoISTrainer(Trainer):
                 LM = L_alpha.sum() *  self.max_completion_length
                 coef_deltaL = (L_alpha/LM).unsqueeze(1) # [bs, sql]
                 loss = (coef_deltaL * per_token_loss * completion_mask).sum()
+                
+        elif self.loss_type == "gmpo": #  Geometric-Mean Policy Optimization https://arxiv.org/pdf/2507.20673
+            # Clipping at token-level & Clipping wider
+            sgn_A = torch.sign(advantages)
+            coef_1 = sgn_A.unsqueeze(1) * (per_token_logps - old_per_token_logps)
+            coef_2 = torch.clamp(coef_1, 1 - self.epsilon_low, 1 + self.epsilon_high)
+            sgn_A_log_probs_diff_min = torch.min(coef_1, coef_2)
+            log_probs_diff_min = sgn_A.unsqueeze(1) * sgn_A_log_probs_diff_min
+            # Geometric-Mean Policy Optimization
+            importance_sampling_ratio = torch.exp(
+                (log_probs_diff_min * completion_mask).sum(-1) / completion_mask.sum(-1).clamp(min=1.0))
+            loss = -(advantages * importance_sampling_ratio).mean()
 
         elif self.loss_type in ["EqP", "gepo", "gspo"]:
             if self.loss_type == "EqP":
