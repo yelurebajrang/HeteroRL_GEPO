@@ -91,8 +91,8 @@ GEPO is the engine of **HeteroRL**, a framework that decouples sampling and lear
 
 ## 📰 Latest Update: ∆L Normalization and GMPO Integrated into HeteroRL!
 
-<details open>
-<summary>📢 <strong>Update: Added Implementation of GMPO — Geometric-Mean Policy Optimization!</strong></summary>
+<details>
+<summary>📢 <strong>Update(🖱️ click): Added Implementation of GMPO — Geometric-Mean Policy Optimization!</strong></summary>
 
 <br>
 
